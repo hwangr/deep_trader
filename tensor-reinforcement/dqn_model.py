@@ -41,12 +41,12 @@ class DQN():
 		checkpoint = tf.train.get_checkpoint_state("saved_networks")
 		if checkpoint and checkpoint.model_checkpoint_path:
 				self.saver.restore(self.session, checkpoint.model_checkpoint_path)
-				print "Successfully loaded:", checkpoint.model_checkpoint_path
+				print("Successfully loaded:", checkpoint.model_checkpoint_path)
 		else:
-				print "Could not find old network weights"
+				print("Could not find old network weights")
 
 		global summary_writer
-		summary_writer = tf.train.SummaryWriter('logs',graph=self.session.graph)
+		summary_writer = tf.summary.FileWriter('logs',graph=self.session.graph)#tf.train.SummaryWriter('logs',graph=self.session.graph)
 
 	def create_Q_network(self, data_dictionary):
 		# network weights
@@ -65,11 +65,11 @@ class DQN():
 	def create_training_method(self):
 		self.action_input = tf.placeholder("float",[None,self.action_dim]) # one hot presentation
 		self.y_input = tf.placeholder("float",[None])
-		Q_action = tf.reduce_sum(tf.mul(self.Q_value,self.action_input),reduction_indices = 1)
+		Q_action = tf.reduce_sum(tf.multiply(self.Q_value,self.action_input),reduction_indices = 1)
 		self.cost = tf.reduce_mean(tf.square(self.y_input - Q_action))
-		tf.scalar_summary("loss",self.cost)
+		tf.summary.scalar("loss",self.cost)
 		global merged_summary_op
-		merged_summary_op = tf.merge_all_summaries()
+		merged_summary_op = tf.summary.merge_all()#tf.merge_all_summaries()
 		self.optimizer = tf.train.AdamOptimizer(0.0001).minimize(self.cost)
 
 	def perceive(self,state,action,reward,next_state,done):
@@ -159,17 +159,17 @@ def main():
 	agent = DQN(data_dictionary)
 	test_rewards = {}
 
-	for iter in xrange(ITERATION):
+	for iter in range(ITERATION):
 		print(iter)
 		data = data_dictionary["x_train"]
-		for episode in xrange(len(data)):
+		for episode in range(len(data)):
 			# initialize task
 			episode_data = data[episode]
 			portfolio = 0
 			portfolio_value = 0
 			# Train 
 			total_reward = 0
-			for step in xrange(STEP):
+			for step in range(STEP):
 				state, action, next_state, reward, done, portfolio, portfolio_value = env_stage_data(agent, step, episode_data, portfolio, portfolio_value, True)
 				total_reward += reward
 				agent.perceive(state,action,reward,next_state,done)
@@ -178,8 +178,8 @@ def main():
 			# Test every 100 episodes
 			if episode % 100 == 0 and episode > 10:
 				total_reward = 0
-				for i in xrange(10):
-					for step in xrange(STEP):
+				for i in range(10):
+					for step in range(STEP):
 						state, action, next_state, reward, done, portfolio, portfolio_value = env_stage_data(agent, step, episode_data, portfolio, portfolio_value, True)
 						total_reward += reward
 						if done:
@@ -190,7 +190,7 @@ def main():
 		#on test data
 		data = data_dictionary["x_test"]
 		iteration_reward = []
-		for episode in xrange(len(data)):
+		for episode in range(len(data)):
 			episode_data = data[episode]
 			portfolio = 0
 			portfolio_list = []
@@ -199,7 +199,7 @@ def main():
 			reward_list = []
 			total_reward = 0
 			action_list = []
-			for step in xrange(STEP):
+			for step in range(STEP):
 				state, action, next_state, reward, done, portfolio, portfolio_value = env_stage_data(agent, step, episode_data, portfolio, portfolio_value, False)
 				action_list.append(action)
 				portfolio_list.append(portfolio)
@@ -214,9 +214,9 @@ def main():
 		avg_reward = sum(iteration_reward) # / float(len(iteration_reward))
 		#print(avg_reward)
 		test_rewards[iter] = [iteration_reward, avg_reward]
-	for key, value in test_rewards.iteritems():
+	for key, value in test_rewards.items():
 		print(value[0])
-	for key, value in test_rewards.iteritems():
+	for key, value in test_rewards.items():
 		print(key)
 		print(value[1])
 
